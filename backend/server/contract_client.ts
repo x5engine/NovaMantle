@@ -7,6 +7,7 @@ import { privateKeyToAccount } from 'viem/accounts';
 import * as dotenv from 'dotenv';
 import * as fs from 'fs';
 import * as path from 'path';
+import { fileURLToPath } from 'url';
 
 dotenv.config();
 
@@ -39,14 +40,33 @@ const mantleSepolia = defineChain({
 
 const RPC_URL = process.env.RPC_URL || 'https://rpc.sepolia.mantle.xyz';
 const CONTRACT_ADDRESS = process.env.CONTRACT_ADDRESS as `0x${string}`;
-const AGENT_PK = process.env.AGENT_PK as `0x${string}`;
+let AGENT_PK = process.env.AGENT_PK;
 
 if (!AGENT_PK) {
   throw new Error('AGENT_PK not set in environment variables');
 }
 
+// Clean and format private key
+AGENT_PK = AGENT_PK.trim();
+// Remove any newlines or extra characters
+AGENT_PK = AGENT_PK.split('\n')[0].split(' ')[0];
+// Ensure private key has 0x prefix
+if (!AGENT_PK.startsWith('0x')) {
+  AGENT_PK = `0x${AGENT_PK}`;
+}
+
+// Validate private key length (should be 66 chars with 0x prefix = 64 hex chars)
+if (AGENT_PK.length !== 66) {
+  throw new Error(`Invalid AGENT_PK length: ${AGENT_PK.length}. Expected 66 characters (0x + 64 hex chars)`);
+}
+
 // Create account from private key
-const account = privateKeyToAccount(AGENT_PK);
+let account;
+try {
+  account = privateKeyToAccount(AGENT_PK as `0x${string}`);
+} catch (error: any) {
+  throw new Error(`Failed to create account from AGENT_PK: ${error.message}. PK length: ${AGENT_PK.length}, starts with 0x: ${AGENT_PK.startsWith('0x')}`);
+}
 
 // Create clients
 export const publicClient = createPublicClient({
@@ -69,6 +89,9 @@ export function loadContractABI(): any[] {
   }
 
   // Try to load from artifacts
+  // Get __dirname equivalent for ES modules
+  const __filename = fileURLToPath(import.meta.url);
+  const __dirname = path.dirname(__filename);
   const artifactsPath = path.join(__dirname, '../../contracts/artifacts/contracts/MantleForgeFactory.sol/MantleForgeFactory.json');
   
   if (fs.existsSync(artifactsPath)) {
@@ -129,7 +152,9 @@ export async function mintRWA(
       address: CONTRACT_ADDRESS,
       abi,
       functionName: 'mintRWA',
-      args: [name, valuation, BigInt(riskScore), mantleDAHash, signature]
+      args: [name, valuation, BigInt(riskScore), mantleDAHash, signature],
+      value: 0n, // Explicitly set value to 0 (nonpayable function)
+      gas: undefined // Let viem estimate gas automatically
     });
 
     console.log(`✅ Mint transaction sent: ${hash}`);

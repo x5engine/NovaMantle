@@ -1,15 +1,11 @@
 /**
  * Home Page
  */
-import CyberTicker from '../components/CyberTicker'
 import CyberButton from '../components/CyberButton'
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-background text-white">
-      <CyberTicker />
-      
-      <main className="container mx-auto px-4 py-12">
+    <main className="container mx-auto px-4 py-12 pt-16">
         {/* Hero Section */}
         <div className="text-center mb-12">
           <h1 className="text-6xl font-bold font-mono mb-4 text-primary">
@@ -18,9 +14,22 @@ export default function Home() {
           <p className="text-xl text-gray-400 font-mono mb-8">
             The Gamified RWA Orchestrator
           </p>
-          <p className="text-lg text-gray-500 max-w-2xl mx-auto">
+          <p className="text-lg text-gray-500 max-w-2xl mx-auto mb-4">
             Turn Real-World Assets into Liquid Yield with Arcade-Speed Execution
           </p>
+          <div className="text-sm text-gray-600 max-w-3xl mx-auto font-mono bg-background-secondary p-4 rounded-lg border border-primary/20">
+            <p className="mb-2"><strong className="text-primary">What to Upload:</strong></p>
+            <ul className="list-disc list-inside space-y-1 text-left">
+              <li>📄 <strong>Invoices</strong> - Accounts receivable, bills, payment documents</li>
+              <li>🏠 <strong>Property Deeds</strong> - Real estate ownership documents</li>
+              <li>📊 <strong>Bonds</strong> - Bond certificates, debt instruments</li>
+              <li>📋 <strong>Contracts</strong> - Commercial agreements, leases</li>
+              <li>💼 <strong>Any RWA Document</strong> - Any document representing a real-world asset</li>
+            </ul>
+            <p className="mt-3 text-xs text-gray-500">
+              Our AI extracts data, calculates risk, and tokenizes your asset on Mantle Network.
+            </p>
+          </div>
         </div>
 
         {/* Main CTA */}
@@ -66,7 +75,6 @@ export default function Home() {
           </div>
         </div>
       </main>
-    </div>
   )
 }
 

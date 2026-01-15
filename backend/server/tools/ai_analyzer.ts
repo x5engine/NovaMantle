@@ -2,7 +2,8 @@
  * AI Analyzer Tool using EmbedAPI
  * Provides AI analysis capabilities for the Agent
  */
-const EmbedAPIClient = require('@embedapi/core');
+// @ts-ignore - EmbedAPI may not have proper types
+import EmbedAPIClient from '@embedapi/core';
 
 const EMBEDAPI_KEY = process.env.EMBEDAPI_KEY || '';
 

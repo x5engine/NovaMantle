@@ -26,10 +26,35 @@ export default function CyberTicker() {
       limit(10)
     );
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const liveData = snapshot.docs.map(doc => doc.data() as TickerEvent);
-      setAssets(liveData);
-    });
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        const liveData = snapshot.docs.map(doc => {
+          const data = doc.data() as TickerEvent;
+          return {
+            ...data,
+            id: doc.id
+          };
+        });
+        console.log('📊 Ticker events received:', liveData.length);
+        if (liveData.length === 0) {
+          console.log('ℹ️  No ticker events yet. Events will appear when assets are minted.');
+        }
+        setAssets(liveData);
+      },
+      (error) => {
+        console.error('❌ Firebase ticker error:', error);
+        console.error('   Make sure Firebase is configured correctly in firebaseConfig.js');
+        // Show error in ticker
+        setAssets([{
+          type: '⚠️',
+          name: 'Firebase Error',
+          val: 'Check console',
+          risk: 0,
+          timestamp: new Date()
+        }]);
+      }
+    );
 
     return () => unsubscribe();
   }, []);

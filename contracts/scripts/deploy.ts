@@ -1,5 +1,7 @@
 import { ethers } from "hardhat";
 import * as dotenv from "dotenv";
+import * as fs from "fs";
+import * as path from "path";
 
 dotenv.config();
 
@@ -11,12 +13,37 @@ async function main() {
   const isTestnet = network.chainId === BigInt(5003);
   
   // 1. The Oracle (Agent wallet address - from .env or parameter)
-  const ORACLE_ADDRESS = process.env.ORACLE_ADDRESS || process.env.AGENT_PK 
-    ? ethers.computeAddress(`0x${process.env.AGENT_PK}`) 
-    : "0x0000000000000000000000000000000000000000";
+  let ORACLE_ADDRESS = process.env.ORACLE_ADDRESS || process.env.AI_ORACLE_WALLET_ADDRESS;
   
-  if (ORACLE_ADDRESS === "0x0000000000000000000000000000000000000000") {
-    throw new Error("ORACLE_ADDRESS or AGENT_PK must be set in .env");
+  // Try to get from contracts/.env AGENT_PK first
+  if (!ORACLE_ADDRESS && process.env.AGENT_PK) {
+    const pk = process.env.AGENT_PK.startsWith('0x') ? process.env.AGENT_PK : '0x' + process.env.AGENT_PK;
+    const wallet = new ethers.Wallet(pk);
+    ORACLE_ADDRESS = wallet.address;
+    console.log(`📝 Using Agent wallet from contracts/.env: ${ORACLE_ADDRESS}`);
+  }
+  
+  // Try to get from backend/.env AGENT_PK
+  if (!ORACLE_ADDRESS) {
+    const backendEnvPath = path.join(__dirname, "../backend/.env");
+    try {
+      if (fs.existsSync(backendEnvPath)) {
+        const backendEnv = fs.readFileSync(backendEnvPath, "utf8");
+        const agentPkMatch = backendEnv.match(/AGENT_PK=(0x?[a-fA-F0-9]+)/);
+        if (agentPkMatch) {
+          const pk = agentPkMatch[1].startsWith('0x') ? agentPkMatch[1] : '0x' + agentPkMatch[1];
+          const wallet = new ethers.Wallet(pk);
+          ORACLE_ADDRESS = wallet.address;
+          console.log(`📝 Using Agent wallet from backend/.env: ${ORACLE_ADDRESS}`);
+        }
+      }
+    } catch (e) {
+      // Ignore errors
+    }
+  }
+  
+  if (!ORACLE_ADDRESS || ORACLE_ADDRESS === "0x0000000000000000000000000000000000000000") {
+    throw new Error("❌ ORACLE_ADDRESS, AI_ORACLE_WALLET_ADDRESS, or AGENT_PK must be set in contracts/.env or backend/.env");
   }
   
   // 2. Ondo USDY Address

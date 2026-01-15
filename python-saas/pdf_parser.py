@@ -81,21 +81,43 @@ class PDFParser:
         Extract metadata from PDF
         
         Returns:
-            Dictionary with PDF metadata
+            Dictionary with PDF metadata (all values converted to strings)
         """
+        def safe_get_metadata(metadata_dict, key, default=''):
+            """Safely extract metadata value, handling IndirectObject types"""
+            try:
+                value = metadata_dict.get(key, default)
+                # Handle IndirectObject and other non-serializable types
+                if hasattr(value, '__str__'):
+                    # Convert to string, handling IndirectObject
+                    str_value = str(value)
+                    # If it's an IndirectObject representation, try to get actual value
+                    if 'IndirectObject' in str(type(value)):
+                        try:
+                            # Try to resolve the indirect object
+                            if hasattr(value, 'get_object'):
+                                resolved = value.get_object()
+                                return str(resolved) if resolved else default
+                        except:
+                            pass
+                    return str_value
+                return str(value) if value else default
+            except Exception:
+                return default
+        
         try:
             pdf_file = io.BytesIO(pdf_bytes)
             pdf_reader = PyPDF2.PdfReader(pdf_file)
             metadata = pdf_reader.metadata or {}
             
             return {
-                'title': metadata.get('/Title', ''),
-                'author': metadata.get('/Author', ''),
-                'subject': metadata.get('/Subject', ''),
-                'creator': metadata.get('/Creator', ''),
-                'producer': metadata.get('/Producer', ''),
-                'creation_date': str(metadata.get('/CreationDate', '')),
-                'modification_date': str(metadata.get('/ModDate', '')),
+                'title': safe_get_metadata(metadata, '/Title', ''),
+                'author': safe_get_metadata(metadata, '/Author', ''),
+                'subject': safe_get_metadata(metadata, '/Subject', ''),
+                'creator': safe_get_metadata(metadata, '/Creator', ''),
+                'producer': safe_get_metadata(metadata, '/Producer', ''),
+                'creation_date': safe_get_metadata(metadata, '/CreationDate', ''),
+                'modification_date': safe_get_metadata(metadata, '/ModDate', ''),
                 'num_pages': len(pdf_reader.pages)
             }
         except Exception as e:

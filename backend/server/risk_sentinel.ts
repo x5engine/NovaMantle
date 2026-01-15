@@ -3,9 +3,9 @@
  * Automated risk monitoring and updates
  * Runs periodically to check asset risks and update on-chain
  */
-import { consultRiskModel } from './tools/consult_risk_model';
-import { updateAssetRisk } from './contract_client';
-import { getFirestore } from './firebase_client';
+import { consultRiskModel } from './tools/consult_risk_model.js';
+import { updateAssetRisk } from './contract_client.js';
+import { getFirestore } from './firebase_client.js';
 import * as admin from 'firebase-admin';
 
 const PYTHON_SAAS_URL = process.env.PYTHON_SAAS_URL || 'http://localhost:5000';

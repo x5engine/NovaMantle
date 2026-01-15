@@ -97,8 +97,13 @@ def analyze_asset():
         if pdf_bytes:
             try:
                 metadata = pdf_parser.extract_metadata(pdf_bytes)
-            except:
-                pass
+                # Ensure all metadata values are JSON-serializable
+                metadata = {k: str(v) if not isinstance(v, (str, int, float, bool, type(None))) else v 
+                           for k, v in metadata.items()}
+            except Exception as e:
+                # Log error but don't fail the request
+                print(f"Warning: Metadata extraction failed: {e}")
+                metadata = {'error': 'Metadata extraction failed', 'num_pages': 0}
         
         return jsonify({
             "status": "success",
